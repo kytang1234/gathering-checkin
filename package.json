@@ -1,0 +1,28 @@
+{
+  "name": "gathering-checkin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "聚會簽到系統 — QR code 與人手登記出席，自動記錄時間、遲到、簽退與總結",
+  "type": "module",
+  "engines": {
+    "node": ">=22.9"
+  },
+  "scripts": {
+    "setup": "node --env-file-if-exists=.env scripts/migrate.mjs && node --env-file-if-exists=.env scripts/seed.mjs",
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "dev": "node --watch --env-file-if-exists=.env server.mjs",
+    "migrate": "node --env-file-if-exists=.env scripts/migrate.mjs",
+    "seed": "node --env-file-if-exists=.env scripts/seed.mjs",
+    "backup": "node --env-file-if-exists=.env scripts/backup.mjs",
+    "user": "node --env-file-if-exists=.env scripts/create-user.mjs",
+    "vendor": "node scripts/vendor.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "test": "node --test --experimental-test-isolation=none \"tests/*.test.mjs\""
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.2.0",
+    "exceljs": "^4.4.0",
+    "jsqr": "^1.4.0",
+    "qrcode": "^1.5.4"
+  }
+}

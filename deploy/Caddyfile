@@ -1,0 +1,33 @@
+# 聚會簽到 — Caddy 反向代理
+#
+# 1. 把 checkin.example.com 換成你的域名，DNS A 記錄指向這台主機
+# 2. 安裝 Caddy：https://caddyserver.com/docs/install
+# 3. sudo cp deploy/Caddyfile /etc/caddy/Caddyfile
+# 4. sudo systemctl reload caddy
+#
+# Caddy 會自動申請與續期 Let's Encrypt 憑證，完成後就是 HTTPS，
+# 平板開相機掃描也可以用了。
+
+checkin.example.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3000
+
+	# 上傳 CSV 名單時最多 5 MB（與程式內限制一致）
+	request_body {
+		max_size 5MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+}
+
+# 只在內網、沒有域名的情況（自簽憑證，平板要手動信任）：
+# https://192.168.1.50 {
+# 	tls internal
+# 	reverse_proxy 127.0.0.1:3000
+# }

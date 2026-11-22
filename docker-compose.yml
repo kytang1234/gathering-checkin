@@ -1,0 +1,30 @@
+services:
+  attendance:
+    build: .
+    image: gathering-checkin:latest
+    container_name: gathering-checkin
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      DATA_DIR: /data
+    # 有反向代理（Caddy／Nginx）時，只綁本機，不對外開端口
+    ports:
+      - "127.0.0.1:3000:3000"
+    # 沒有反向代理、只想在區網用 http 直連時，把上面一行換成：
+    # - "3000:3000"
+    volumes:
+      # 用主機目錄，備份與搬移都直接看得見（Linux 上要先 sudo chown 1000:1000 ./data）
+      - ./data:/data
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      start_period: 25s
+      retries: 3

@@ -1,0 +1,15 @@
+node_modules
+data
+.env
+*.log
+*.db
+*.db-wal
+*.db-shm
+.git
+.gitignore
+tests
+docs
+start.bat
+Dockerfile
+docker-compose.yml
+.dockerignore

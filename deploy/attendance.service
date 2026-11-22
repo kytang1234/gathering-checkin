@@ -1,0 +1,36 @@
+# 聚會簽到 — systemd 服務（不使用 Docker 時）
+#
+# 1. 把專案放到 /opt/attendance，建立專用使用者：
+#      sudo useradd -r -s /usr/sbin/nologin attendance
+#      sudo chown -R attendance:attendance /opt/attendance
+# 2. 建立 /opt/attendance/.env（參考 .env.example）
+# 3. sudo cp deploy/attendance.service /etc/systemd/system/
+# 4. sudo systemctl daemon-reload && sudo systemctl enable --now attendance
+# 5. sudo journalctl -u attendance -f
+
+[Unit]
+Description=聚會簽到 (Gathering Check-in)
+Documentation=file:///opt/attendance/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=attendance
+Group=attendance
+WorkingDirectory=/opt/attendance
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node --env-file-if-exists=.env server.mjs
+Restart=always
+RestartSec=3
+TimeoutStopSec=15
+
+# 只允許寫入資料目錄
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/attendance/data
+
+[Install]
+WantedBy=multi-user.target
