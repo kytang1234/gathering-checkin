@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>聚會簽到系統 — 提示詞</title>
+<style>
+:root {
+  --bg: #f4f2ec; --surface: #fff; --ink: #1b211d; --ink-soft: #37403a;
+  --muted: #6c756e; --line: #e2ded2; --brand: #2f5d50; --brand-soft: #e7efe9;
+  --code-bg: #1d2622; --code-ink: #dcece4;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Segoe UI", system-ui, sans-serif;
+  line-height: 1.75; font-size: 16px;
+}
+.top {
+  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 16px;
+  padding: 10px 20px; background: rgba(244,242,236,.92); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.brand { font-weight: 700; letter-spacing: .02em; }
+.brand span { color: var(--brand); }
+.actions { margin-left: auto; display: flex; gap: 8px; }
+button {
+  font: inherit; font-size: 14px; padding: 7px 13px; border-radius: 9px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+}
+button:hover { border-color: var(--brand); }
+button.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 40px; max-width: 1180px; margin: 0 auto; padding: 28px 20px 90px; }
+.toc { position: sticky; top: 74px; align-self: start; font-size: 14px; max-height: calc(100vh - 100px); overflow: auto; }
+.toc h2 { font-size: 12px; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; margin: 0 0 10px; }
+.toc a { display: block; padding: 4px 0 4px 10px; color: var(--ink-soft); text-decoration: none; border-left: 2px solid transparent; }
+.toc a:hover { color: var(--brand); }
+.toc a.level-3 { padding-left: 22px; font-size: 13px; color: var(--muted); }
+.toc a.active { border-left-color: var(--brand); color: var(--brand); font-weight: 600; }
+.doc { max-width: 800px; min-width: 0; }
+.doc h1 { font-size: 1.9rem; line-height: 1.3; margin: 8px 0 18px; letter-spacing: -.01em; }
+.doc h2 { font-size: 1.28rem; margin: 38px 0 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.doc h3 { font-size: 1.05rem; margin: 24px 0 8px; color: var(--brand); }
+.doc p { margin: 0 0 14px; }
+.doc ul, .doc ol { margin: 0 0 16px; padding-left: 22px; }
+.doc li { margin: 4px 0; }
+.doc li::marker { color: var(--brand); }
+.doc strong { font-weight: 700; }
+.doc code {
+  font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-size: .9em;
+  background: #eae6db; padding: .12em .38em; border-radius: 5px;
+}
+.doc a { color: var(--brand); text-underline-offset: 3px; }
+.doc hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+.doc blockquote {
+  margin: 0 0 16px; padding: 10px 16px; border-left: 3px solid var(--brand);
+  background: var(--brand-soft); color: var(--ink-soft); border-radius: 0 8px 8px 0;
+}
+.doc blockquote p { margin: 0; }
+.table-wrap { overflow-x: auto; margin: 0 0 18px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; background: var(--surface); }
+th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+th { background: #eceade; font-weight: 600; }
+.code-wrap { position: relative; margin: 0 0 18px; }
+.code-lang {
+  position: absolute; top: 8px; right: 42px; font-size: 11px; letter-spacing: .08em;
+  color: #9db3a8; text-transform: uppercase;
+}
+pre {
+  margin: 0; background: var(--code-bg); color: var(--code-ink); padding: 16px;
+  border-radius: 12px; overflow-x: auto; font-size: 13px; line-height: 1.65;
+  font-family: ui-monospace, "Cascadia Code", Menlo, monospace;
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.copy-code {
+  position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 9px;
+  background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.28); color: #eaf3ee;
+}
+.copy-code:hover { background: rgba(255,255,255,.22); }
+.toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px);
+  background: var(--brand); color: #fff; padding: 9px 18px; border-radius: 999px;
+  font-size: 14px; opacity: 0; pointer-events: none; transition: all .25s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; gap: 20px; padding-top: 18px; }
+  .toc { position: static; max-height: none; border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--surface); }
+  .toc a { display: inline-block; margin-right: 12px; padding: 2px 0; border: 0; }
+  .toc a.level-3 { display: none; }
+  .doc h1 { font-size: 1.5rem; }
+}
+@media print {
+  .top, .toc, .copy-code, .toast { display: none !important; }
+  .layout { display: block; max-width: none; padding: 0; }
+  body { background: #fff; font-size: 11pt; }
+  .doc { max-width: none; }
+  pre { background: #f4f4f4; color: #111; border: 1px solid #ccc; white-space: pre-wrap; word-break: break-word; }
+  .doc h2 { break-after: avoid; }
+  table { font-size: 9.5pt; }
+  a { color: #000; text-decoration: none; }
+  @page { margin: 14mm; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">聚會簽到 <span>· 文件</span></div>
+  <div class="actions">
+    <button type="button" class="primary" data-copy-all>複製全文</button>
+    <button type="button" data-print>列印 / 存 PDF</button>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" aria-label="目錄">
+    <h2>目錄</h2>
+    <a href="#s2" class="level-2">與 v1 的分別</a>
+<a href="#s3" class="level-2">完整提示詞</a>
+<a href="#s4" class="level-2">精簡版（想快速重建時用）</a>
+<a href="#s5" class="level-2">使用建議</a>
+  </nav>
+  <main class="doc">
+<h1 id="s1">聚會簽到系統 — 提示詞（v2）</h1>
+<blockquote><p>用途：把整份貼給 AI 或開發者，即可重建與本專案同等級的系統。 這份是「實際做完之後」回寫的版本，已包含所有中途決定與踩過的坑。 最後更新：2026-11-23</p></blockquote>
+<hr>
+<h2 id="s2">與 v1 的分別</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>v1</th><th>v2</th></tr></thead><tbody><tr><td>技術棧</td><td>Next.js + React + Prisma</td><td>純 Node.js + SQLite，無建置步驟</td></tr>
+<tr><td>簽到</td><td>只有簽到</td><td>簽到＋簽退＋遲到＋停留時間</td></tr>
+<tr><td>聚會欄位</td><td>6 個</td><td>名額、費用、餐飲、截止、公開／內部備註</td></tr>
+<tr><td>帳號</td><td>只有管理員</td><td>管理員＋職員，網頁內管理</td></tr>
+<tr><td>部署</td><td>未定</td><td>Windows 本機／Docker／GCP，附備份下載</td></tr>
+<tr><td>驗收</td><td>8 項</td><td>14 項，逐項可測</td></tr></tbody></table></div>
+<hr>
+<h2 id="s3">完整提示詞</h2>
+<div class="code-wrap"><span class="code-lang">text</span><pre class="raw"><code>你是一位資深全端工程師。請由零開始建立一個「聚會簽到系統」網站，並交付可立即運行、
+可部署到單機或雲端主機的完整專案。
+
+════════════════════════════════════════
+一、背景與使用情境
+════════════════════════════════════════
+- 使用者是香港的教會／社群，定期舉辦聚會（主日崇拜、聚餐、分享會）。
+- 每場 20–300 人，現場 1–3 位工作人員，用平板在門口點名。
+- 現時用紙筆點名，事後要人手整理，容易漏、難統計。
+- 介面用繁體中文、港幣 HK$、時區預設 Asia/Hong_Kong。
+- 優先「單機自架」：一台 Windows 電腦或一部 VM，資料留在自己手上。
+- 參加者多為長者，字要大、按鈕要大、流程要短。
+
+════════════════════════════════════════
+二、硬性技術約束（請嚴格遵守）
+════════════════════════════════════════
+1. Node.js 22.9+、ESM、JavaScript（不用 TypeScript）。
+2. 不用任何前端框架、不用 bundler、不需要 build step；改完存檔即生效。
+3. HTTP 用 node:http 自寫小路由器（支援 /events/:id/checkin 這種路徑）。
+4. HTML 用 tagged template 產生，插值必須自動轉義；禁止字串拼接使用者輸入。
+5. 資料庫用 better-sqlite3（WAL、foreign_keys、busy_timeout），自寫 SQL migration
+   runner（db/migrations/*.sql + schema_migrations 表），不引入 ORM。
+6. 只准以下依賴：better-sqlite3、qrcode、exceljs。
+   QR 掃描用 jsqr 的 UMD 檔複製到 public/vendor/，不要用 CDN。
+7. 密碼用 node:crypto 的 scrypt；session 存 DB（cookie 只存隨機 token 的 sha256）。
+8. 所有 SQL 必須用 prepared statement 參數綁定。
+9. 程式碼分層：src/lib（純邏輯）、src/routes（流程）、src/views（畫面）、
+   src/routes/helpers.mjs（共用載入與導向）。
+10. 測試用 node:test（不用 jest/vitest），`npm test` 可直接跑。
+
+════════════════════════════════════════
+三、資料模型
+════════════════════════════════════════
+users
+  id, name(唯一), role(admin|staff), password_hash, is_active, created_at
+
+events
+  id, name, event_date(YYYY-MM-DD 當地日期), start_time(HH:MM), end_time,
+  location, notes(會顯示在自助頁), internal_notes(只給工作人員),
+  status(draft|open|closed), timezone(預設 Asia/Hong_Kong),
+  capacity(可空＝不限), fee_amount(整數「分」), fee_note,
+  contact_name, contact_phone, meal_options(JSON 陣列字串),
+  registration_deadline(當地 YYYY-MM-DDTHH:MM),
+  late_after_minutes(預設 15), allow_self_checkin, allow_self_checkout,
+  public_token(24 bytes 隨機), created_at, updated_at
+
+attendees（全域人名庫，一個人只建一次，可参加多場）
+  id, name, phone(正規化為純數字，可空), group_name, notes,
+  personal_token(24 bytes), is_active, created_at, updated_at
+
+event_attendees（本場名單＋場次專屬資料）
+  event_id, attendee_id, source(manual|import|walkin),
+  seat_no, meal_choice, fee_paid, fee_paid_at, note, created_at
+  PRIMARY KEY (event_id, attendee_id)
+
+checkins（一人一場一列）
+  id, event_id, attendee_id, checked_in_at(UTC ISO 毫秒),
+  method(qr_self|qr_scan|manual), is_late, late_minutes,
+  checked_out_at, checkout_method, operator_user_id(自助時 NULL), note, created_at
+  UNIQUE (event_id, attendee_id)   ← 防重複的最後防線
+
+sessions
+  id(sha256(cookie)), user_id, csrf, created_at, expires_at
+
+設計理由（請保留）：
+- 聚會日期時間存「當地日期＋當地時間＋時區」，不存 UTC；簽到時刻才存 UTC。
+- 費用存整數「分」，避免浮點誤差。
+- 簽到與簽退同一列，查出席不必 join；代價是不支援中途離場再進場，用「撤銷簽退」補救。
+- 防重複靠 DB UNIQUE，寫入時捕捉 SQLITE_CONSTRAINT，不要用「先 SELECT 再 INSERT」。
+- late 在寫入時算好，避免日後改規則令歷史統計變臉。
+
+════════════════════════════════════════
+四、功能規格
+════════════════════════════════════════
+【A. 聚會管理】
+- 新增／編輯／刪除聚會；狀態 draft/open/closed。
+- 刪除需二次確認，並連帶刪除名單與簽到。
+- 每個聚會一個獨立網址與一個公開 token；可「重新產生 QR」令舊連結即時失效。
+
+【B. 名單】
+- 逐個新增（姓名必填，電話／組別／桌號／餐飲／備註選填）。
+- CSV 匯入：欄位「姓名,電話,組別,桌號,餐飲,備註」，自動辨識標題列，
+  沒有標題列則按位置讀；先出預覽（會新增 N、已存在 M、空白 K），確認才寫入。
+  每次上限 1,000 人、5 MB；重複以「電話後 8 位」或同名判斷並略過。
+- 電話正規化：去空白、-、括號、+；香港號碼比對只看後 8 位（+852 9123 4567 = 91234567）。
+- 每人可標記「已繳費」，記錄時間。
+- 可列印個人 QR 卡（A4 九宮格，每張有姓名、8 碼短碼、QR）。
+
+【C. 三種簽到（全部要支援，記錄 method 與操作者）】
+1. 聚會 QR 自助：海報／投影上的 QR → /s/&lt;public_token&gt; → 參加者自己按。
+2. 掃個人 QR：工作人員在已登入的簽到頁開鏡頭，掃到 ATT:&lt;token&gt; → 顯示姓名 →
+   確認簽到（掃到不在名單的人要自動加入）。
+3. 人手：搜尋姓名／電話後一鍵簽到；也可輸入卡片上的 8 碼短碼。
+- 重複簽到：不新增，回傳原本時間，顯示「已於 19:42 簽到（人手）」。
+- 可撤銷簽到；撤銷後可再簽。
+
+【D. 遲到與簽退】
+- 遲到：簽到時刻 &gt; 聚會開始 + late_after_minutes 才算遲到，記下遲到幾分鐘；
+  剛好等於寬限分鐘不算遲到。
+- 簽退：工作人員可簽退；聚會開啟 allow_self_checkout 時，參加者可自助簽退，
+  但要輸入電話後 4 碼驗身。停留時間 = 簽退 − 簽到，取整分。
+- 總結列出「已簽到未簽退」人數與名單。
+
+【E. 自助簽到頁 /s/:token】
+- 顯示聚會名稱、日期（含星期）、時間、地點、公開備註、費用、聯絡人；
+  內部備註永不顯示。
+- 只做「逐字搜尋」（姓名或電話），不列出完整名單；候選人只顯示遮蔽電話（9123****）。
+- 找不到可展開「不在名單上」表單，填姓名（電話選填）即建立 walk-in 並簽到。
+- 名額已滿擋住新的自助報名；過了 registration_deadline 擋住自助新增。
+- 聚會 closed 顯示已結束；draft 顯示未開始。
+- 限流：每個 IP＋聚會每分鐘 180 次（可用 PUBLIC_RATE_LIMIT 調）。
+
+【F. QR 內容】
+- 聚會 QR：完整網址 &lt;APP_BASE_URL&gt;/s/&lt;public_token&gt;。
+- 個人 QR：純文字 ATT:&lt;personal_token&gt;，刻意不做成網址，普通相機掃到只顯示一行字，
+  必須在已登入的掃描介面才解析得到。
+- 短碼 = token 前 8 碼（大寫），查詢時大小寫不拘，必須唯一才解析。
+
+【G. 總結與匯出】
+- 統計：名單數、出席、未出席、出席率、遲到、準時、已簽退、平均停留、
+  應收／實收／未繳人數、餐飲分佈、各簽到方式人次。
+- CSV：UTF-8 帶 BOM、CRLF、RFC4180 轉義；出席在前、未出席在後。
+  欄位：姓名,電話,組別,桌號,餐飲,簽到時間,遲到,遲到分鐘,簽退時間,停留分鐘,
+  簽到方式,已繳費,備註。
+- Excel：三個工作表「出席／未出席／統計」，凍結首行、欄寬自適應，時間以文字寫入。
+- 總結頁支援列印（@media print 隱藏導覽與按鈕）。
+
+【H. 帳號管理（網頁內完成，不需命令列）】
+- 管理員可在「職員」頁新增職員：名稱、角色、密碼（留空自動產生 12 碼，
+  避開 O/0/I/l/1），密碼只在建立後顯示一次（POST 回應頁，不入網址）。
+- 可重設密碼（顯示一次、踢掉舊 session）、停用／啟用（停用即踢登入但保留記錄）。
+- 保護：不能停用自己；不能停用最後一個啟用中的管理員。
+- 保留 CLI 作備援：npm run user（列）、add、reset。
+
+【I. 備份】
+- CLI：npm run backup，用 VACUUM INTO 產生快照，保留最近 14 份。
+- 網頁：管理員在「職員」頁按「下載備份 .db」，即時下載一致性快照
+  （給沒有 shell 的托管環境用）。
+
+════════════════════════════════════════
+五、權限矩陣
+════════════════════════════════════════
+遊客：只能開 /s/:token 自助簽到頁。
+staff：登入、看聚會、管名單、簽到／簽退、匯出、看總結。
+admin：以上＋建立／編輯／刪除聚會、重設 QR、管理職員、下載備份。
+- 所有非公開頁面都要登入；staff 直接開 /users 或 /events/new 要 403。
+- 選單要按角色隱藏，不要讓 staff 見到管理功能。
+
+════════════════════════════════════════
+六、介面要求
+════════════════════════════════════════
+- 手機優先，375px 寬不得橫向捲動；表格在 720px 以下轉為卡片（用 data-label）。
+- 現場燈光下要易按：按鈕最小高度 42px，主要按鈕 48px 以上。
+- 暖紙色底、深綠主色、圓角卡片；不用外部字型與圖示庫（離線要完整）。
+- 獨立的全屏 QR 頁（投影用）：深色背景、大 QR、聚會名稱與時間。
+- 繁體中文文案，用語貼近香港（例：搵唔到、即刻、簽到）。
+
+════════════════════════════════════════
+七、安全
+════════════════════════════════════════
+- 密碼 scrypt（N=16384, r=8, p=1, 64 bytes），格式 scrypt$N$r$p$salt$hash。
+- Session cookie：httpOnly、SameSite=Lax、12 小時滑動過期；
+  經反向代理時依 X-Forwarded-Proto 加 Secure。
+- 每個 session 一把 CSRF token，所有已登入的 POST（含 JSON API）都要驗。
+- 登入限流 10 次／分鐘／IP。
+- 公開頁只可新增自己的簽到／簽退，回應不含他人資料。
+- 錯誤頁不洩漏 SQL 或堆疊；DEBUG=1 才印細節。
+
+════════════════════════════════════════
+八、啟動與部署
+════════════════════════════════════════
+- npm install → npm run setup（migrate＋建立管理員）→ npm start。
+- .env：PORT、HOST、DATA_DIR、APP_BASE_URL、ADMIN_NAME、ADMIN_PASSWORD、
+  TLS_CERT/TLS_KEY、PUBLIC_RATE_LIMIT。
+- APP_BASE_URL 留空時由請求的 Host 推導；填了就以它產生 QR。
+- Windows：start.bat 必須是純 ASCII＋CRLF（中文 Windows 用 CP950 讀批次檔，
+  UTF-8 中文會被鋸開），中文提示與檢查交給 scripts/launch.mjs；
+  啟動器要能偵測「已在運行」並直接開瀏覽器。
+- 容器：多階段 Dockerfile（non-root、/data volume、healthcheck 打 /login），
+  docker compose 把資料掛到 ./data:/data，只綁 127.0.0.1:3000。
+- 反向代理：附 Caddyfile（自動 HTTPS）與 systemd unit。
+- 部署文件涵蓋：VPS／PaaS（Volume 掛 /data、單副本）／Cloudflare Tunnel／
+  Google Compute Engine（Cloud Run 不適用，因無持久磁碟）。
+
+════════════════════════════════════════
+九、時間處理
+════════════════════════════════════════
+- 聚會是「11 月 22 日晚上 7 點」這種約定，必須原樣顯示，不可被時區換算改動。
+- 簽到時刻用伺服器 now，前端傳來的時間一律忽略。
+- 顯示用 Intl.DateTimeFormat 配聚會時區；實作 當地時間→UTC 的雙次 offset 校正。
+- 測試要覆蓋：香港 +8、日光節約切換（America/New_York）、跨日（23:50 簽到）。
+
+════════════════════════════════════════
+十、效能與上限（請寫進文件）
+════════════════════════════════════════
+- 全域會員無上限；單場名單建議 2,000 人以內（頁面一次載入）。
+- CSV 每次 1,000 人／5 MB，可分批。
+- 自助限流 180 次／分鐘／IP＋聚會（同一 Wi-Fi 共用 IP，太低會誤擋）。
+- 單程序、單副本；SQLite 不支援多機共用同一個 db 檔（網絡磁碟）。
+
+════════════════════════════════════════
+十一、驗收標準（逐項實測後才回報完成）
+════════════════════════════════════════
+1. 建立聚會後即時顯示可下載的 QR；手機掃到正確聚會頁。
+2. 三種簽到都成功，記錄到秒、方法與操作者。
+3. 同一人重複簽到不新增，並顯示原本簽到時間。
+4. 遲到邊界正確：剛好 15 分鐘不算遲到，16 分鐘算並記 16 分。
+5. 自助簽退要電話後 4 碼，錯 3 次以上也不能通過。
+6. CSV 用 Excel 開中文不亂碼；Excel 三工作表數字與畫面一致。
+7. 375px 寬可完成建立聚會、簽到、看總結，無橫向捲動。
+8. 未登入不能改任何資料；staff 開 /users、/events/new 回 403。
+9. 備份下載的檔案可被 SQLite 開啟，資料筆數正確。
+10. 斷網時區網內仍可人手簽到（自助 QR 依賴網絡，要講清楚）。
+11. 名額已滿與報名截止會擋住自助新增，但工作人員仍可加人。
+12. 重新產生 QR 後，舊連結回 404。
+13. 列印個人 QR 卡：A4 一頁 9 張、不切邊、QR 可掃。
+14. npm test 全綠（至少涵蓋時間、CSV、遲到、重複簽到、統計、匯出）。
+
+════════════════════════════════════════
+十二、交付物
+════════════════════════════════════════
+- 完整可運行專案（package.json、migration、seed、.env.example）。
+- README：安裝、五分鐘流程、三種簽到、匯入格式、匯出、備份、權限、疑難排解。
+- docs/plan.md（設計與資料模型）、docs/deploy.md（VPS／PaaS／Tunnel）、
+  docs/deploy-gcp.md（Compute Engine）。
+- scripts/：migrate、seed、backup、vendor、create-user、launch、smoke。
+- tests/：node:test 單元測試（時間、規則、CSV、store、統計）。
+
+════════════════════════════════════════
+十三、工作方式
+════════════════════════════════════════
+- 先回覆：實作計畫、資料模型、頁面清單、技術取捨，等我確認才寫程式。
+- 每個階段（骨架→聚會→名單→簽到→簽退→總結→收尾）完成就停，給我測試清單。
+- 需求不明確先問，不要自行假設。
+- 不要做：多租戶、即時大屏、人臉辨識、多語系、離線佇列、Vercel／Cloud Run 部署。</code></pre></div>
+<hr>
+<h2 id="s4">精簡版（想快速重建時用）</h2>
+<div class="code-wrap"><span class="code-lang">text</span><pre><code>用 Node.js 22 + node:http + 原生 HTML 模板 + better-sqlite3，做一個繁體中文的聚會簽到系統，
+不要框架、不要 build step，只准 better-sqlite3／qrcode／exceljs 三個依賴。
+
+功能：聚會 CRUD（日期時間＋時區、地點、公開與內部備註、名額、費用、餐飲選項、報名截止、
+遲到寬限）；全域人名庫＋每場名單（桌號、餐飲、已繳費）；三種簽到（聚會 QR 自助、掃個人 QR、
+人手點擊）並記錄到秒、方式與操作者；同一人一場只可簽一次，重複時顯示原時間；自動判定遲到；
+簽退與停留時間（自助簽退要電話後 4 碼）；自助頁只可搜尋不可列名單、電話遮蔽、名額與截止檢查；
+名單 CSV 匯入（先預覽、每批 1000）；總結頁與 CSV／Excel 匯出、列印；管理員與職員分權，
+職員可在網頁內新增／重設密碼／停用；備份用 VACUUM INTO，可從網頁下載 .db。
+
+要求：手機優先 375px、列印樣式、CSRF、scrypt、session 12 小時、公開頁限流 180/分鐘、
+QR token 24 bytes 且個人 QR 用 ATT:&lt;token&gt; 純文字加 8 碼短碼。先給我計畫與資料模型。</code></pre></div>
+<hr>
+<h2 id="s5">使用建議</h2>
+<p>一次貼太長，後半段（尤其驗收）容易被忽略。</p>
+<ol>
+<li><strong>先貼到第十節為止</strong>，等對方回計畫與資料模型；確認後才貼驗收標準與交付物。</li>
+<li>如果對方直接開始寫程式，回一句「先停，只輸出計畫與資料模型」。</li>
+<li>驗收標準盡量逐項叫它實測，而不是口頭回報。</li>
+<li>若對方用 Next.js 或 Prisma，直接貼第二節的硬性約束，不要讓它「自由發揮」。</li>
+<li>Windows 使用者記得保留第八節關於 <code>start.bat</code> 編碼那一段，這是實際踩過的坑。</li>
+</ol>
+  </main>
+</div>
+<div class="hint" style="display:none">source: promptv2.md</div>
+<script>
+(function () {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = '已複製';
+  document.body.appendChild(toast);
+  let timer;
+  function showToast(text) {
+    toast.textContent = text;
+    toast.classList.add('show');
+    clearTimeout(timer);
+    timer = setTimeout(() => toast.classList.remove('show'), 1600);
+  }
+
+  async function copy(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      const area = document.createElement('textarea');
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch {}
+      area.remove();
+      return ok;
+    }
+  }
+
+  document.querySelectorAll('.code-wrap').forEach((wrap) => {
+    const pre = wrap.querySelector('pre');
+    if (!pre) return;
+    const button = document.createElement('button');
+    button.className = 'copy-code';
+    button.textContent = '複製';
+    button.addEventListener('click', async () => {
+      const ok = await copy(pre.innerText);
+      showToast(ok ? '已複製' : '請手動選取複製');
+    });
+    wrap.appendChild(button);
+  });
+
+  const raw = document.querySelector('pre.raw');
+  const copyAll = document.querySelector('[data-copy-all]');
+  if (copyAll && raw) {
+    copyAll.addEventListener('click', async () => {
+      const ok = await copy(raw.innerText);
+      showToast(ok ? '已複製整份提示詞' : '請手動選取複製');
+    });
+  } else if (copyAll) {
+    copyAll.hidden = true;
+  }
+
+  document.querySelector('[data-print]')?.addEventListener('click', () => window.print());
+
+  const links = [...document.querySelectorAll('.toc a')];
+  const sections = links.map((a) => document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
+  if (sections.length && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id));
+        }
+      },
+      { rootMargin: '-15% 0px -75% 0px' },
+    );
+    sections.forEach((section) => observer.observe(section));
+  }
+})();
+</script>
+</body>
+</html>

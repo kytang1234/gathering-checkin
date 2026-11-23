@@ -6,6 +6,10 @@
 - 手機優先介面，現場用平板掃描，散場用電腦匯出。
 - 三種簽到方式：聚會 QR 自助、工作人員掃個人 QR、名單人手點擊。
 
+文件：**[文件索引（HTML）](docs/index.html)**｜[設計與資料模型](docs/plan.md)｜[重建用提示詞](docs/promptv2.md)｜[部署](docs/deploy.md)｜[Google Cloud 部署](docs/deploy-gcp.md)
+
+文件也有 HTML 版（`docs/index.html`），可直接雙擊開啟、列印或存成 PDF；改完 Markdown 執行 `npm run docs` 重新產生。
+
 ---
 
 ## 快速開始
@@ -233,6 +237,7 @@ npm run backup
 | `npm run user -- reset 陳師傅` | 重設密碼（會踢掉現有登入） |
 | `npm run backup` | 備份資料庫 |
 | `npm run vendor` | 重新複製掃描器到 `public/vendor/` |
+| `npm run docs` | 把 `docs/*.md` 重新產生 HTML（含索引頁） |
 | `npm test` | 單元測試（31 項） |
 | `npm run smoke` | 對啟動中的伺服器跑煙霧測試 |
 

@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>聚會簽到系統 — 設計與資料模型</title>
+<style>
+:root {
+  --bg: #f4f2ec; --surface: #fff; --ink: #1b211d; --ink-soft: #37403a;
+  --muted: #6c756e; --line: #e2ded2; --brand: #2f5d50; --brand-soft: #e7efe9;
+  --code-bg: #1d2622; --code-ink: #dcece4;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", "Segoe UI", system-ui, sans-serif;
+  line-height: 1.75; font-size: 16px;
+}
+.top {
+  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 16px;
+  padding: 10px 20px; background: rgba(244,242,236,.92); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.brand { font-weight: 700; letter-spacing: .02em; }
+.brand span { color: var(--brand); }
+.actions { margin-left: auto; display: flex; gap: 8px; }
+button {
+  font: inherit; font-size: 14px; padding: 7px 13px; border-radius: 9px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+}
+button:hover { border-color: var(--brand); }
+button.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.layout { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 40px; max-width: 1180px; margin: 0 auto; padding: 28px 20px 90px; }
+.toc { position: sticky; top: 74px; align-self: start; font-size: 14px; max-height: calc(100vh - 100px); overflow: auto; }
+.toc h2 { font-size: 12px; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; margin: 0 0 10px; }
+.toc a { display: block; padding: 4px 0 4px 10px; color: var(--ink-soft); text-decoration: none; border-left: 2px solid transparent; }
+.toc a:hover { color: var(--brand); }
+.toc a.level-3 { padding-left: 22px; font-size: 13px; color: var(--muted); }
+.toc a.active { border-left-color: var(--brand); color: var(--brand); font-weight: 600; }
+.doc { max-width: 800px; min-width: 0; }
+.doc h1 { font-size: 1.9rem; line-height: 1.3; margin: 8px 0 18px; letter-spacing: -.01em; }
+.doc h2 { font-size: 1.28rem; margin: 38px 0 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.doc h3 { font-size: 1.05rem; margin: 24px 0 8px; color: var(--brand); }
+.doc p { margin: 0 0 14px; }
+.doc ul, .doc ol { margin: 0 0 16px; padding-left: 22px; }
+.doc li { margin: 4px 0; }
+.doc li::marker { color: var(--brand); }
+.doc strong { font-weight: 700; }
+.doc code {
+  font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-size: .9em;
+  background: #eae6db; padding: .12em .38em; border-radius: 5px;
+}
+.doc a { color: var(--brand); text-underline-offset: 3px; }
+.doc hr { border: 0; border-top: 1px solid var(--line); margin: 32px 0; }
+.doc blockquote {
+  margin: 0 0 16px; padding: 10px 16px; border-left: 3px solid var(--brand);
+  background: var(--brand-soft); color: var(--ink-soft); border-radius: 0 8px 8px 0;
+}
+.doc blockquote p { margin: 0; }
+.table-wrap { overflow-x: auto; margin: 0 0 18px; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; background: var(--surface); }
+th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+th { background: #eceade; font-weight: 600; }
+.code-wrap { position: relative; margin: 0 0 18px; }
+.code-lang {
+  position: absolute; top: 8px; right: 42px; font-size: 11px; letter-spacing: .08em;
+  color: #9db3a8; text-transform: uppercase;
+}
+pre {
+  margin: 0; background: var(--code-bg); color: var(--code-ink); padding: 16px;
+  border-radius: 12px; overflow-x: auto; font-size: 13px; line-height: 1.65;
+  font-family: ui-monospace, "Cascadia Code", Menlo, monospace;
+}
+pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+.copy-code {
+  position: absolute; top: 8px; right: 8px; font-size: 12px; padding: 4px 9px;
+  background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.28); color: #eaf3ee;
+}
+.copy-code:hover { background: rgba(255,255,255,.22); }
+.toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px);
+  background: var(--brand); color: #fff; padding: 9px 18px; border-radius: 999px;
+  font-size: 14px; opacity: 0; pointer-events: none; transition: all .25s;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; gap: 20px; padding-top: 18px; }
+  .toc { position: static; max-height: none; border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--surface); }
+  .toc a { display: inline-block; margin-right: 12px; padding: 2px 0; border: 0; }
+  .toc a.level-3 { display: none; }
+  .doc h1 { font-size: 1.5rem; }
+}
+@media print {
+  .top, .toc, .copy-code, .toast { display: none !important; }
+  .layout { display: block; max-width: none; padding: 0; }
+  body { background: #fff; font-size: 11pt; }
+  .doc { max-width: none; }
+  pre { background: #f4f4f4; color: #111; border: 1px solid #ccc; white-space: pre-wrap; word-break: break-word; }
+  .doc h2 { break-after: avoid; }
+  table { font-size: 9.5pt; }
+  a { color: #000; text-decoration: none; }
+  @page { margin: 14mm; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">聚會簽到 <span>· 文件</span></div>
+  <div class="actions">
+    <button type="button" class="primary" data-copy-all>複製全文</button>
+    <button type="button" data-print>列印 / 存 PDF</button>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" aria-label="目錄">
+    <h2>目錄</h2>
+    <a href="#s2" class="level-2">1. 與 v0.1 的差異</a>
+<a href="#s3" class="level-2">2. 技術選型（v0.2）</a>
+<a href="#s4" class="level-2">3. 目錄結構</a>
+<a href="#s5" class="level-2">4. 資料模型</a>
+<a href="#s6" class="level-3">4.1 關聯</a>
+<a href="#s7" class="level-3">4.2 Schema</a>
+<a href="#s8" class="level-3">4.3 幾個設計取捨</a>
+<a href="#s9" class="level-2">5. 頁面</a>
+<a href="#s10" class="level-2">6. 核心規則</a>
+<a href="#s11" class="level-3">6.1 簽到</a>
+<a href="#s12" class="level-3">6.2 遲到</a>
+<a href="#s13" class="level-3">6.3 簽退</a>
+<a href="#s14" class="level-3">6.4 配對與去重</a>
+<a href="#s15" class="level-3">6.5 名額與截止</a>
+<a href="#s16" class="level-3">6.6 收費</a>
+<a href="#s17" class="level-2">7. 匯出與列印</a>
+<a href="#s18" class="level-2">8. 權限、安全與穩定</a>
+<a href="#s19" class="level-2">9. 部署（區網自架）</a>
+<a href="#s20" class="level-2">10. 分階段實作</a>
+<a href="#s21" class="level-2">11. 測試（node --test）</a>
+<a href="#s22" class="level-2">12. 風險</a>
+<a href="#s23" class="level-2">13. 開工前最後確認</a>
+<a href="#s24" class="level-2">14. 實作狀態（2026-11-22 完成）</a>
+  </nav>
+  <main class="doc">
+<h1 id="s1">聚會簽到系統 — 實作計畫與資料模型（v0.2）</h1>
+<blockquote><p>依 2026-11-22 討論調整：換技術棧、加簽退／遲到、聚會欄位加多、部署環境改為區網自架 專案位置：<code>default-workspace/attendance/</code></p></blockquote>
+<hr>
+<h2 id="s2">1. 與 v0.1 的差異</h2>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>v0.1</th><th>v0.2</th></tr></thead><tbody><tr><td>技術棧</td><td>Next.js 15 + React</td><td><strong>純 Node.js <code>node:http</code> + 伺服器端 HTML</strong>，零建置</td></tr>
+<tr><td>簽退</td><td>無</td><td>工作人員簽退＋（可選）自助簽退，計停留時間</td></tr>
+<tr><td>遲到</td><td>無</td><td>依聚會開始時間＋寬限分鐘自動標記</td></tr>
+<tr><td>聚會欄位</td><td>6 個</td><td>加名額、費用、聯絡人、餐飲選項、報名截止、自助開關</td></tr>
+<tr><td>名單欄位</td><td>姓名／電話／組別</td><td>加桌號、餐飲選擇、已繳費</td></tr>
+<tr><td>部署</td><td>未定</td><td>單一 Node 程序跑在區網主機，平板／手機連入；資料為本機 SQLite 檔</td></tr></tbody></table></div>
+<hr>
+<h2 id="s3">2. 技術選型（v0.2）</h2>
+<div class="table-wrap"><table><thead><tr><th>層</th><th>選擇</th><th>理由</th></tr></thead><tbody><tr><td>執行環境</td><td>Node.js 22（ESM，<code>.mjs</code>）</td><td>已確認本機可用；無 TypeScript 編譯步驟，改完即生效</td></tr>
+<tr><td>HTTP</td><td><code>node:http</code> ＋ 自寫小路由器（<code>/events/:id/checkin</code> 風格）</td><td>需求只有 12 條路由，框架帶來的抽象大於好處</td></tr>
+<tr><td>畫面</td><td>伺服器端字串模板 ＋ 自動轉義的 <code>html</code> tagged template</td><td>無 hydration、無 bundler；手機載入極快</td></tr>
+<tr><td>互動</td><td>少量原生 JS（掃描、搜尋、確認對話框），<code>fetch</code> JSON API</td><td>只有掃描頁真的需要前端邏輯</td></tr>
+<tr><td>資料庫</td><td><code>better-sqlite3</code>（WAL）</td><td>單檔、同步 API、200 人規模綽綽有餘；已實測可安裝執行</td></tr>
+<tr><td>樣式</td><td>自寫 CSS（變數＋語意 class）</td><td>列印樣式、大按鈕、深色投影畫面都好控制</td></tr>
+<tr><td>QR 產生</td><td><code>qrcode</code>（伺服器端 PNG／SVG）</td><td>純 JS，可離線</td></tr>
+<tr><td>QR 掃描</td><td><code>jsqr</code>（UMD 檔複製到 <code>public/vendor/</code>）＋ <code>getUserMedia</code></td><td>純 JS、不上 CDN，內網斷網也能用；另有手動輸入編號</td></tr>
+<tr><td>Excel</td><td><code>exceljs</code></td><td>純 JS，可三個工作表、凍結首行、中文正常</td></tr>
+<tr><td>密碼</td><td><code>node:crypto</code> scrypt</td><td>無原生模組</td></tr>
+<tr><td>測試</td><td><code>node:test</code> ＋ <code>node:assert</code>（內建）</td><td>零測試相依，<code>node --test</code> 直接跑</td></tr></tbody></table></div>
+<p><strong>全部依賴只有 3 個</strong>：<code>better-sqlite3</code>、<code>qrcode</code>、<code>exceljs</code>（<code>jsqr</code> 取 UMD 檔後可從 dependencies 移除）。沒有 build、沒有 transpile、沒有 dev server。</p>
+<p><strong>啟動</strong>：<code>npm install</code> → <code>npm run setup</code>（migrate＋seed）→ <code>npm start</code>。就這麼多。</p>
+<hr>
+<h2 id="s4">3. 目錄結構</h2>
+<div class="code-wrap"><pre><code>attendance/
+├─ package.json              # type: module
+├─ server.mjs                # http/https 伺服器、靜態檔、路由分派
+├─ start.bat                 # Windows 一鍵啟動
+├─ .env.example
+├─ data/                     # attendance.db、backups/（gitignore）
+├─ db/migrations/001_init.sql
+├─ scripts/
+│  ├─ migrate.mjs            # 依序執行未套用的 .sql，記錄 schema_migrations
+│  ├─ seed.mjs               # 管理員帳號＋示範聚會
+│  ├─ create-user.mjs        # CLI 新增 staff／重設密碼
+│  └─ backup.mjs             # VACUUM INTO data/backups/YYYYMMDD-HHMM.db
+├─ public/
+│  ├─ app.css
+│  ├─ scan.js                # 相機掃描頁邏輯
+│  └─ vendor/jsqr.js
+├─ src/
+│  ├─ router.mjs             # 路徑比對、query/body 解析、錯誤處理
+│  ├─ routes/{auth,events,roster,checkin,checkout,summary,publicCheckin,api,static}.mjs
+│  ├─ lib/{db,auth,csrf,session,tokens,time,rules,csv,xlsx,html,http,ratelimit}.mjs
+│  └─ views/{layout,login,dashboard,eventForm,event,qr,roster,checkin,summary,public}.mjs
+└─ tests/*.test.mjs</code></pre></div>
+<hr>
+<h2 id="s5">4. 資料模型</h2>
+<h3 id="s6">4.1 關聯</h3>
+<div class="code-wrap"><pre><code>users ──&lt; sessions
+users ──&lt; checkins（operator；自助簽到為 NULL）
+events ──&lt; event_attendees &gt;── attendees
+events ──&lt; checkins &gt;── attendees        UNIQUE(event_id, attendee_id)</code></pre></div>
+<ul>
+<li><code>attendees</code>：全域人名庫，一個人建一次，可参加多場。</li>
+<li><code>event_attendees</code>：這場聚會的名單＋場次專屬資料（桌號、餐飲、繳費）。</li>
+<li><code>checkins</code>：一筆記錄同時管簽到與簽退（<code>checked_out_at</code>），成對出現才完整。</li>
+</ul>
+<h3 id="s7">4.2 Schema</h3>
+<div class="code-wrap"><span class="code-lang">sql</span><pre><code>PRAGMA journal_mode = WAL;
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE users (
+  id            TEXT PRIMARY KEY,
+  name          TEXT NOT NULL UNIQUE,
+  role          TEXT NOT NULL CHECK (role IN ('admin','staff')),
+  password_hash TEXT NOT NULL,
+  is_active     INTEGER NOT NULL DEFAULT 1,
+  created_at    TEXT NOT NULL
+);
+
+CREATE TABLE events (
+  id                     TEXT PRIMARY KEY,
+  name                   TEXT NOT NULL,
+  event_date             TEXT NOT NULL,                 -- YYYY-MM-DD（當地）
+  start_time             TEXT NOT NULL,                 -- HH:MM
+  end_time               TEXT,                          -- 預計結束（當地）
+  location               TEXT,
+  notes                  TEXT,
+  status                 TEXT NOT NULL DEFAULT 'draft'
+                         CHECK (status IN ('draft','open','closed')),
+  timezone               TEXT NOT NULL DEFAULT 'Asia/Hong_Kong',
+  capacity               INTEGER,                       -- 名額上限，NULL＝不限
+  fee_amount             INTEGER NOT NULL DEFAULT 0,    -- 每人費用，以「分」儲存
+  fee_note               TEXT,                          -- 例：現場繳費、已包在月費
+  contact_name           TEXT,                          -- 聚會聯絡人
+  contact_phone          TEXT,
+  meal_options           TEXT,                          -- JSON 陣列，例 [&quot;葷&quot;,&quot;素&quot;]
+  registration_deadline  TEXT,                          -- 當地 YYYY-MM-DDTHH:MM
+  late_after_minutes     INTEGER NOT NULL DEFAULT 15,   -- 開始後幾分鐘算遲到
+  allow_self_checkin     INTEGER NOT NULL DEFAULT 1,
+  allow_self_checkout    INTEGER NOT NULL DEFAULT 0,
+  public_token           TEXT NOT NULL UNIQUE,
+  created_at             TEXT NOT NULL,
+  updated_at             TEXT NOT NULL
+);
+CREATE INDEX idx_events_date ON events(event_date DESC);
+
+CREATE TABLE attendees (
+  id             TEXT PRIMARY KEY,
+  name           TEXT NOT NULL,
+  phone          TEXT,                                  -- 正規化為純數字，可空
+  group_name     TEXT,                                  -- 組別／部門／家庭
+  notes          TEXT,
+  personal_token TEXT NOT NULL UNIQUE,
+  is_active      INTEGER NOT NULL DEFAULT 1,
+  created_at     TEXT NOT NULL,
+  updated_at     TEXT NOT NULL
+);
+CREATE INDEX idx_attendees_name  ON attendees(name);
+CREATE INDEX idx_attendees_phone ON attendees(phone);
+
+CREATE TABLE event_attendees (
+  event_id    TEXT NOT NULL REFERENCES events(id)    ON DELETE CASCADE,
+  attendee_id TEXT NOT NULL REFERENCES attendees(id) ON DELETE CASCADE,
+  source      TEXT NOT NULL DEFAULT 'manual'
+              CHECK (source IN ('manual','import','walkin')),
+  seat_no     TEXT,                                     -- 桌號／座位
+  meal_choice TEXT,                                     -- 對應 events.meal_options
+  fee_paid    INTEGER NOT NULL DEFAULT 0,
+  fee_paid_at TEXT,
+  note        TEXT,
+  created_at  TEXT NOT NULL,
+  PRIMARY KEY (event_id, attendee_id)
+);
+CREATE INDEX idx_ea_attendee ON event_attendees(attendee_id);
+
+CREATE TABLE checkins (
+  id               TEXT PRIMARY KEY,
+  event_id         TEXT NOT NULL REFERENCES events(id)    ON DELETE CASCADE,
+  attendee_id      TEXT NOT NULL REFERENCES attendees(id) ON DELETE CASCADE,
+  checked_in_at    TEXT NOT NULL,                        -- UTC ISO，毫秒
+  method           TEXT NOT NULL CHECK (method IN ('qr_self','qr_scan','manual')),
+  is_late          INTEGER NOT NULL DEFAULT 0,
+  late_minutes     INTEGER,                              -- 遲到幾分鐘，準時為 0
+  checked_out_at   TEXT,
+  checkout_method  TEXT CHECK (checkout_method IN ('qr_self','qr_scan','manual')),
+  operator_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+  note             TEXT,
+  created_at       TEXT NOT NULL,
+  UNIQUE (event_id, attendee_id)
+);
+CREATE INDEX idx_checkins_event_time ON checkins(event_id, checked_in_at);
+
+CREATE TABLE sessions (
+  id         TEXT PRIMARY KEY,          -- sha256(cookie token)
+  user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  csrf       TEXT NOT NULL,             -- 每個 session 一把，表單必帶
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL
+);
+CREATE INDEX idx_sessions_expiry ON sessions(expires_at);</code></pre></div>
+<h3 id="s8">4.3 幾個設計取捨</h3>
+<p><strong>費用存「分」而非浮點數</strong>：<code>fee_amount INTEGER</code>，顯示時除 100。避免 <code>0.1+0.2</code> 這類誤差，也讓 Excel 匯出不會出現 128.99999。</p>
+<p><strong>簽到／簽退同一列</strong>：一個人一場聚會只有一列，查「出席」不必 join 兩張表；代價是不支援「中途離場再進場」多次。MVP 接受，工作人員可按「撤銷簽退」修正。</p>
+<p><strong>名單資料分兩層</strong>：<code>attendees</code> 放不隨聚會變的（姓名、電話），<code>event_attendees</code> 放本場專屬的（桌號、餐飲、繳費）。同一個人下場聚會重新收費、重新選餐，不會互相污染。</p>
+<p><strong><code>is_late</code> 寫入時算好</strong>：不在查詢時算，因為「幾點算開始」依聚會時區與 <code>late_after_minutes</code> 而定；寫入時算一次，之後查詢與匯出都便宜，也避免規則改動讓歷史統計變臉。</p>
+<hr>
+<h2 id="s9">5. 頁面</h2>
+<div class="table-wrap"><table><thead><tr><th>路由</th><th>權限</th><th>內容</th></tr></thead><tbody><tr><td><code>/login</code></td><td>公開</td><td>名稱＋密碼</td></tr>
+<tr><td><code>/</code></td><td>已登入</td><td>聚會卡列表：日期、名稱、狀態、出席／名單、收費進度</td></tr>
+<tr><td><code>/events/new</code>、<code>/events/:id/edit</code></td><td>admin</td><td>聚會表單（含新欄位）</td></tr>
+<tr><td><code>/events/:id</code></td><td>已登入</td><td>總覽：統計卡＋大按鈕（顯示 QR／現場簽到／名單／總結）</td></tr>
+<tr><td><code>/events/:id/qr</code></td><td>已登入</td><td>全屏 QR（投影用）＋下載 PNG／SVG＋列印</td></tr>
+<tr><td><code>/events/:id/roster</code></td><td>已登入</td><td>名單：搜尋、新增、CSV 匯入、桌號／餐飲／繳費、個人 QR</td></tr>
+<tr><td><code>/events/:id/checkin</code></td><td>已登入</td><td>搜尋簽到、相機掃描、臨時新增、最近簽到／簽退</td></tr>
+<tr><td><code>/events/:id/summary</code></td><td>已登入</td><td>出席／未出席、遲到、停留時間、收費、匯出、列印</td></tr>
+<tr><td><code>/s/:token</code></td><td>公開</td><td>自助簽到／簽退（只限本人）</td></tr></tbody></table></div>
+<hr>
+<h2 id="s10">6. 核心規則</h2>
+<h3 id="s11">6.1 簽到</h3>
+<ul>
+<li>三種方式：<code>qr_self</code>（掃聚會 QR 自己按）、<code>qr_scan</code>（工作人員掃個人 QR）、<code>manual</code>（名單點擊）。</li>
+<li>時間由伺服器產生，前端傳來的時間一律忽略。</li>
+<li>同一人第二次簽到：不新增，回傳原記錄並顯示「已於 19:42 簽到（人手）」。</li>
+</ul>
+<h3 id="s12">6.2 遲到</h3>
+<div class="code-wrap"><pre><code>開始時刻 = events.event_date + start_time，以 events.timezone 解讀
+is_late  = (checked_in_at − 開始時刻) &gt; late_after_minutes × 60 秒
+late_minutes = 上述差值換算分鐘（準時為 0）</code></pre></div>
+<p><code>Asia/Hong_Kong</code> 無日光節約，但 <code>lib/time.mjs</code> 用通用演算法（來回兩次校正 offset），並用 <code>America/New_York</code> 測 DST，日後改時區不會踩雷。</p>
+<h3 id="s13">6.3 簽退</h3>
+<ul>
+<li>工作人員在名單／掃描頁按「簽退」→ 寫 <code>checked_out_at</code>、<code>checkout_method</code>。</li>
+<li>自助簽退：聚會 <code>allow_self_checkout = 1</code> 時，<code>/s/:token</code> 簽到成功頁會出現「我要離開」按鈕（需再驗一次身分：電話後 4 碼）。</li>
+<li>停留時間 = <code>checked_out_at − checked_in_at</code>；未簽退者不計入平均，另列「未簽退 n 人」。</li>
+<li>待太久警示：超過 <code>end_time + 2 小時</code> 未簽退，總結頁標記，方便追。</li>
+</ul>
+<h3 id="s14">6.4 配對與去重</h3>
+<ul>
+<li>電話正規化：去空白、<code>-</code>、<code>(</code>、<code>)</code>、<code>+</code>；香港號碼比後 8 位；空號碼不參與。</li>
+<li>順序：電話精確 → 姓名完全 → 都沒有就建立 <code>walkin</code>。</li>
+<li>多筆候選：列出「姓名＋遮蔽電話」讓使用者揀（<code>9123****</code>），不顯示完整號碼。</li>
+</ul>
+<h3 id="s15">6.5 名額與截止</h3>
+<ul>
+<li>名單人數 ≥ <code>capacity</code> 時，自助簽到拒絕新 walk-in，提示「名額已滿，請找工作人員」；工作人員可強制加入。</li>
+<li>過了 <code>registration_deadline</code>，自助登記關閉（仍可自助簽到已報名者）。這兩個只影響公開頁。</li>
+</ul>
+<h3 id="s16">6.6 收費</h3>
+<ul>
+<li>應收 = <code>fee_amount × 出席人數</code>；實收 = <code>SUM(fee_paid)</code>（只計出席者）。</li>
+<li>名單頁可一鍵標記「已繳費」，記錄 <code>fee_paid_at</code>。</li>
+<li>匯出含「已繳費」欄，方便對帳。</li>
+</ul>
+<hr>
+<h2 id="s17">7. 匯出與列印</h2>
+<p><strong>CSV</strong>（UTF-8 BOM、CRLF、RFC4180 轉義）欄位： <code>姓名, 電話, 組別, 桌號, 餐飲, 簽到時間, 遲到分鐘, 簽退時間, 停留分鐘, 簽到方式, 已繳費, 備註</code></p>
+<p><strong>Excel</strong>：<code>出席</code>／<code>未出席</code>／<code>統計</code> 三表；首行凍結、欄寬自適應、時間以文字寫入避免 Excel 自行轉時區。</p>
+<p><strong>統計表</strong>：名單數、出席、未出席、出席率、遲到、準時、已簽退、平均停留、應收、實收、餐飲分佈、各簽到方式人次。</p>
+<p><strong>列印</strong>：<code>@media print</code> 隱藏導覽，A4 直向，黑底白字轉為白底黑字。</p>
+<hr>
+<h2 id="s18">8. 權限、安全與穩定</h2>
+<ul>
+<li>Cookie <code>httpOnly; SameSite=Lax</code>;正式環境可加 <code>Secure</code>（走 HTTPS 時自動加）。</li>
+<li>每個 session 一把 CSRF token，所有 POST 表單與 API 都驗；比對用 <code>timingSafeEqual</code>。</li>
+<li><code>requireUser()</code> / <code>requireAdmin()</code> 包住所有非公開路由。</li>
+<li>公開端點只可新增本人簽到／簽退，回應不含他人資料；以「IP＋token」記憶體限流（30 次/分），超限回 429。</li>
+<li>自助頁不提供名單瀏覽，只做逐字搜尋並遮蔽電話。</li>
+<li>錯誤頁不洩漏 SQL 或堆疊；<code>DEBUG=1</code> 時才在主控台印細節。</li>
+<li>SQLite 一律用 prepared statement 參數綁定（無字串拼接）。</li>
+</ul>
+<hr>
+<h2 id="s19">9. 部署（區網自架）</h2>
+<ul>
+<li>啟動：<code>node server.mjs</code>，讀 <code>.env</code>；<code>HOST=0.0.0.0</code>、<code>PORT=3000</code>、<code>DATA_DIR=./data</code>、<code>APP_BASE_URL=http://192.168.x.x:3000</code>。</li>
+<li>Windows：<code>start.bat</code> 一鍵啟動；README 附「工作排程器開機自動執行」步驟。</li>
+<li>相機限制：<code>http://&lt;區網 IP&gt;</code> 不是安全來源，瀏覽器會拒絕開相機。提供三條路：</li>
+</ul>
+<ol>
+<li>用 <code>localhost</code> 在伺服器本機操作（最快驗收）；</li>
+<li><code>TLS_CERT</code>／<code>TLS_KEY</code> 指向憑證，<code>server.mjs</code> 自動改用 <code>https</code>（配合 <code>mkcert</code> 或公司內部 CA）；</li>
+<li>掃描頁永遠保留「手動輸入個人編號」，無相機也能完成簽到。</li>
+</ol>
+<ul>
+<li>備份：<code>npm run backup</code> 產生 <code>data/backups/…db</code>；README 建議排程每日一次，並提到「複製 .db 檔前先跑 backup，避免 WAL 未合併」。</li>
+<li>多部平板同時用：同一個程序、各自登入，SQLite WAL 足夠；不支援多台伺服器共用同一個 db 檔（網絡磁碟）。</li>
+</ul>
+<hr>
+<h2 id="s20">10. 分階段實作</h2>
+<div class="table-wrap"><table><thead><tr><th>階段</th><th>內容</th><th>驗收</th></tr></thead><tbody><tr><td>P1 骨架</td><td>server、router、靜態、migration、seed、登入／登出、CSRF</td><td><code>npm start</code> 可登入，見空列表</td></tr>
+<tr><td>P2 聚會</td><td>CRUD＋新欄位、狀態、<code>/qr</code>、<code>/s/:token</code> 外殼</td><td>建聚會即出 QR，手機掃到正確聚會資料</td></tr>
+<tr><td>P3 名單</td><td>新增、CSV 匯入（預覽重複）、桌號／餐飲／繳費、個人 QR</td><td>匯入 20 行正確、可標繳費</td></tr>
+<tr><td>P4 簽到</td><td>三種方式、遲到計算、防重複、撤銷</td><td>三方式成功、重複顯示原時間、遲到分鐘正確</td></tr>
+<tr><td>P5 簽退</td><td>工作人員簽退、自助簽退（開關）、停留時間</td><td>簽退後總結見停留分鐘與平均</td></tr>
+<tr><td>P6 總結</td><td>統計、出席／未出席、CSV＋Excel、列印</td><td>數字與 DB 一致、Excel 中文正常</td></tr>
+<tr><td>P7 收尾</td><td>測試、README、備份、<code>start.bat</code>、375px 實測</td><td><code>npm test</code> 全綠、手機可操作</td></tr></tbody></table></div>
+<p>每階段做完會给你一條「點樣試」的清單，你試完我才繼續。</p>
+<hr>
+<h2 id="s21">11. 測試（<code>node --test</code>）</h2>
+<ul>
+<li><code>time.mjs</code>：當地時間→UTC（含 DST 時區）、UTC→顯示、跨日。</li>
+<li><code>rules.mjs</code>：遲到判定（邊界：剛好 15 分、15 分 1 秒）、出席率、停留時間。</li>
+<li><code>csv.mjs</code>：引號內逗號／換行、BOM、CRLF。</li>
+<li><code>attendees</code>：電話正規化、同名多筆、空電話、walk-in 建立。</li>
+<li><code>checkins</code>：重複簽到回傳既有記錄、併發兩次只寫一筆、撤銷後可再簽。</li>
+<li>手動：手機 Chrome／Safari 各走一次三種簽到＋簽退。</li>
+</ul>
+<hr>
+<h2 id="s22">12. 風險</h2>
+<div class="table-wrap"><table><thead><tr><th>風險</th><th>對策</th></tr></thead><tbody><tr><td>區網 http 開不到相機</td><td>手動輸入備援＋TLS 選項＋<code>localhost</code> 驗收</td></tr>
+<tr><td>同桌多人共用電話</td><td>不設唯一鍵，配對時列候選</td></tr>
+<tr><td>中途離場再入場</td><td>不支援多次進出，工作人員可撤銷簽退重簽</td></tr>
+<tr><td>平板休眠／Wi-Fi 斷</td><td>表單送出失敗會保留輸入並提示重試；不做離線佇列（MVP）</td></tr>
+<tr><td>SQLite 寫入鎖</td><td>單程序；WAL；長報表查詢加 <code>LIMIT</code></td></tr>
+<tr><td>忘記密碼</td><td><code>npm run user -- reset &lt;name&gt;</code> CLI 重設</td></tr></tbody></table></div>
+<hr>
+<h2 id="s23">13. 開工前最後確認</h2>
+<ol>
+<li>部署主機是 Windows 電腦放辦公室、平板連同一個 Wi-Fi，對嗎？（若是雲端主機或 Docker，講一聲我調整）</li>
+<li>聚會費用顯示用「港幣 HK$」，對嗎？</li>
+<li>自助簽到頁面需要顯示聚會地點與 Note 給參加者看嗎？（會公開，注意別寫內部備註）</li>
+</ol>
+<hr>
+<h2 id="s24">14. 實作狀態（2026-11-22 完成）</h2>
+<p>P1–P7 全部完成。與原計畫的差異：</p>
+<div class="table-wrap"><table><thead><tr><th>項目</th><th>調整</th></tr></thead><tbody><tr><td>公開備註</td><td>加開 <code>events.internal_notes</code>：<code>notes</code> 顯示在自助頁，<code>internal_notes</code> 只給工作人員</td></tr>
+<tr><td>個人 QR 備援</td><td>卡片印 8 碼短碼（token 前 8 碼），掃不到可手動輸入；短碼必須唯一才解析</td></tr>
+<tr><td>自助簽退</td><td>需電話後 4 碼驗身，且聚會要開啟 <code>allow_self_checkout</code></td></tr>
+<tr><td>簽到 API</td><td>同時接受 JSON 與表單，並容許帶 <code>ATT:</code> 前綴</td></tr>
+<tr><td>測試執行</td><td>用 <code>node:test</code>；因執行環境不能 spawn 子程序，改用 <code>--experimental-test-isolation=none</code> 單程序執行</td></tr></tbody></table></div>
+<p>驗證：31 項單元測試、煙霧測試（登入、CRUD、三種簽到、CSV／Excel、權限）、深入流程測試（匯入、短碼、掃描 API、簽退、名額、截止、QR 重設）全部通過。</p>
+  </main>
+</div>
+<div class="hint" style="display:none">source: plan.md</div>
+<script>
+(function () {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = '已複製';
+  document.body.appendChild(toast);
+  let timer;
+  function showToast(text) {
+    toast.textContent = text;
+    toast.classList.add('show');
+    clearTimeout(timer);
+    timer = setTimeout(() => toast.classList.remove('show'), 1600);
+  }
+
+  async function copy(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      const area = document.createElement('textarea');
+      area.value = text;
+      document.body.appendChild(area);
+      area.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch {}
+      area.remove();
+      return ok;
+    }
+  }
+
+  document.querySelectorAll('.code-wrap').forEach((wrap) => {
+    const pre = wrap.querySelector('pre');
+    if (!pre) return;
+    const button = document.createElement('button');
+    button.className = 'copy-code';
+    button.textContent = '複製';
+    button.addEventListener('click', async () => {
+      const ok = await copy(pre.innerText);
+      showToast(ok ? '已複製' : '請手動選取複製');
+    });
+    wrap.appendChild(button);
+  });
+
+  const raw = document.querySelector('pre.raw');
+  const copyAll = document.querySelector('[data-copy-all]');
+  if (copyAll && raw) {
+    copyAll.addEventListener('click', async () => {
+      const ok = await copy(raw.innerText);
+      showToast(ok ? '已複製整份提示詞' : '請手動選取複製');
+    });
+  } else if (copyAll) {
+    copyAll.hidden = true;
+  }
+
+  document.querySelector('[data-print]')?.addEventListener('click', () => window.print());
+
+  const links = [...document.querySelectorAll('.toc a')];
+  const sections = links.map((a) => document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
+  if (sections.length && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id));
+        }
+      },
+      { rootMargin: '-15% 0px -75% 0px' },
+    );
+    sections.forEach((section) => observer.observe(section));
+  }
+})();
+</script>
+</body>
+</html>

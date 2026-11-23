@@ -16,6 +16,7 @@
     "backup": "node --env-file-if-exists=.env scripts/backup.mjs",
     "user": "node --env-file-if-exists=.env scripts/create-user.mjs",
     "vendor": "node scripts/vendor.mjs",
+    "docs": "node scripts/build-docs.mjs",
     "smoke": "node scripts/smoke.mjs",
     "test": "node --test --experimental-test-isolation=none \"tests/*.test.mjs\""
   },
