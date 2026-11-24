@@ -6,7 +6,7 @@ import { generatePassword, hashPassword, requireAdmin, requireUser } from '../li
 import { HttpError } from '../lib/http.mjs';
 import { newId } from '../lib/tokens.mjs';
 import { listEvents } from '../lib/store.mjs';
-import { dashboardPage, passwordRevealPage, usersPage } from '../views/dashboard.mjs';
+import { dashboardPage, passwordFormPage, passwordRevealPage, usersPage } from '../views/dashboard.mjs';
 import { flashFrom } from '../views/ui.mjs';
 import { backWith } from './helpers.mjs';
 
@@ -109,7 +109,21 @@ export function registerDashboardRoutes(router) {
     };
   });
 
-  // 重設密碼（可指定新密碼，留空則自動產生）
+  // 重設密碼：可自訂，或留空由系統自動產生
+  router.get('/users/:id/password', (ctx) => {
+    requireAdmin(ctx);
+    const target = userById(ctx.db, ctx.params.id);
+    if (!target) throw new HttpError(404, '找不到這個帳號');
+    return {
+      html: passwordFormPage({
+        user: ctx.user,
+        target,
+        csrfToken: ctx.session.csrf,
+        error: '',
+      }),
+    };
+  });
+
   router.post('/users/:id/password', (ctx) => {
     requireAdmin(ctx);
     const target = userById(ctx.db, ctx.params.id);
@@ -119,8 +133,31 @@ export function registerDashboardRoutes(router) {
     try {
       typed = cleanPassword(ctx.fields);
     } catch (error) {
-      if (error instanceof HttpError) return renderUsers(ctx, { type: 'err', text: error.message }, 400);
+      if (error instanceof HttpError) {
+        return {
+          html: passwordFormPage({
+            user: ctx.user,
+            target,
+            csrfToken: ctx.session.csrf,
+            error: error.message,
+          }),
+          status: 400,
+        };
+      }
       throw error;
+    }
+
+    const mode = String(ctx.fields.mode || (typed ? 'manual' : 'auto'));
+    if (mode === 'manual' && !typed) {
+      return {
+        html: passwordFormPage({
+          user: ctx.user,
+          target,
+          csrfToken: ctx.session.csrf,
+          error: '請輸入新密碼，或改按「自動產生」。',
+        }),
+        status: 400,
+      };
     }
 
     const password = typed || generatePassword();

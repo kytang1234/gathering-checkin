@@ -9,6 +9,7 @@ const root = path.resolve(import.meta.dirname, '..');
 const docsDir = path.join(root, 'docs');
 
 const TITLES = {
+  'promptv3.md': '聚會簽到系統 — 提示詞 v3',
   'promptv2.md': '聚會簽到系統 — 提示詞',
   'prompt.md': '聚會簽到系統 — 提示詞',
   'plan.md': '聚會簽到系統 — 設計與資料模型',

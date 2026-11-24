@@ -138,11 +138,7 @@ export function usersPage({ user, users, flash, csrfToken = '' }) {
                 </td>
                 <td data-label="建立">${row.created_at.slice(0, 10)}</td>
                 <td data-label="操作" class="col-actions">
-                  <form method="post" action="/users/${row.id}/password" class="inline-form"
-                        data-confirm="重設「${row.name}」的密碼？他目前的登入會即時失效。">
-                    ${csrf(csrfToken)}
-                    <button class="btn btn-sm btn-ghost" type="submit">重設密碼</button>
-                  </form>
+                  <a class="btn btn-sm btn-ghost" href="/users/${row.id}/password">重設密碼</a>
                   <form method="post" action="/users/${row.id}/toggle" class="inline-form">
                     ${csrf(csrfToken)}
                     <button class="btn btn-sm btn-ghost" type="submit">${row.is_active ? '停用' : '啟用'}</button>
@@ -205,6 +201,43 @@ export function passwordRevealPage({ user, csrfToken = '', name, role, password,
           </div>
         </div>
       </section>
+    `,
+  });
+}
+
+/** 重設密碼：可自訂，或由系統自動產生（兩個明確的按鈕，不需要 JS）。 */
+export function passwordFormPage({ user, target, csrfToken = '', error = '' }) {
+  return page({
+    title: `重設密碼 · ${target.name}`,
+    user,
+    active: '/users',
+    csrfToken,
+    flash: error ? { type: 'err', text: error } : null,
+    body: html`
+      <p class="crumb"><a href="/">聚會</a> / <a href="/users">職員</a> / 重設密碼</p>
+      <div class="page-head">
+        <div>
+          <h1 class="h1">重設「${target.name}」的密碼</h1>
+          <p class="muted">${target.name} 目前的登入會即時失效；若改的是自己，會保留你現在這個登入。</p>
+        </div>
+        <a class="btn btn-ghost" href="/users">返回</a>
+      </div>
+
+      <form method="post" action="/users/${target.id}/password" class="card narrow stack">
+        ${csrf(csrfToken)}
+        <label class="field">
+          <span>新密碼</span>
+          <input name="password" type="text" minlength="8" maxlength="128" autocomplete="new-password"
+                 placeholder="自訂密碼，最少 8 個字元">
+          <small class="muted">想自己定就填上面；不想煩就按下面的「自動產生」。</small>
+        </label>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit" name="mode" value="manual">使用這個密碼</button>
+          <button class="btn" type="submit" name="mode" value="auto">自動產生</button>
+          <a class="btn btn-ghost" href="/users">取消</a>
+        </div>
+        <p class="hint">自動產生的密碼是 12 碼，會在下一個畫面顯示一次，請即時抄下或複製給對方。</p>
+      </form>
     `,
   });
 }

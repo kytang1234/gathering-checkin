@@ -25,11 +25,54 @@
     if (statusEl) statusEl.textContent = text;
   }
 
-  function beep(ok = true) {
+  const SOUND_KEY = 'cs.scan.sound';
+  let audioContext = null;
+
+  function soundEnabled() {
     try {
-      if (navigator.vibrate) navigator.vibrate(ok ? 40 : [60, 40, 60]);
+      return localStorage.getItem(SOUND_KEY) !== '0';
+    } catch {
+      return true;
+    }
+  }
+
+  function playTone(freq, startAt, duration, volume = 0.12) {
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, startAt);
+    gain.gain.linearRampToValueAtTime(volume, startAt + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+    osc.connect(gain).connect(audioContext.destination);
+    osc.start(startAt);
+    osc.stop(startAt + duration + 0.02);
+  }
+
+  /** kind: 'scan'（讀到碼）、'success'（簽到完成）、'error'（失敗） */
+  function beep(kind = 'success') {
+    try {
+      if (navigator.vibrate) navigator.vibrate(kind === 'error' ? [60, 40, 60] : 40);
     } catch {
       /* 忽略 */
+    }
+    if (!soundEnabled()) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!audioContext) audioContext = new AudioCtx();
+      if (audioContext.state === 'suspended') audioContext.resume();
+      const now = audioContext.currentTime;
+      if (kind === 'success') {
+        playTone(880, now, 0.1);
+        playTone(1320, now + 0.12, 0.16);
+      } else if (kind === 'scan') {
+        playTone(1100, now, 0.06, 0.08);
+      } else {
+        playTone(220, now, 0.3, 0.14);
+      }
+    } catch {
+      /* 沒有音效權限就算了 */
     }
   }
 
@@ -112,7 +155,7 @@
           const found = jsQR(image.data, width, height, { inversionAttempts: 'dontInvert' });
           if (found?.data) {
             paused = true;
-            beep(true);
+            beep('scan');
             setStatus('已讀取，正在查詢…');
             resolveCode(found.data);
           }
@@ -137,6 +180,7 @@
       });
       const data = await response.json();
       if (!response.ok || !data.ok) {
+        beep('error');
         showResult(
           `<p class="flash flash-err">${escapeHtml(data.error || '找不到這個 QR')}</p>
            <div class="scan-actions"><button class="btn btn-sm" data-resume>繼續掃描</button></div>`,
@@ -145,6 +189,7 @@
       }
       showAttendee(data);
     } catch {
+      beep('error');
       showResult(
         `<p class="flash flash-err">連線失敗，請再掃一次。</p>
          <div class="scan-actions"><button class="btn btn-sm" data-resume>繼續掃描</button></div>`,
@@ -182,13 +227,14 @@
       });
       const data = await response.json();
       if (!response.ok || !data.ok) {
+        beep('error');
         showResult(
           `<p class="flash flash-err">${escapeHtml(data.error || '簽到失敗')}</p>
            <div class="scan-actions"><button class="btn btn-sm" data-resume>繼續掃描</button></div>`,
         );
         return;
       }
-      beep(true);
+      beep('success');
       const late = data.is_late ? `<span class="badge badge-warn">遲到 ${data.late_minutes} 分</span>` : '<span class="badge badge-ok">準時</span>';
       showResult(`
         <h3>✓ ${escapeHtml(data.name)} 簽到完成</h3>
@@ -199,6 +245,7 @@
         if (running) resume();
       }, 2200);
     } catch {
+      beep('error');
       showResult(
         `<p class="flash flash-err">連線失敗，請再試一次。</p>
          <div class="scan-actions"><button class="btn btn-sm" data-resume>繼續掃描</button></div>`,
@@ -236,6 +283,20 @@
     resume('');
     setStatus('已停止');
   });
+
+  // 提示音開關：記在這部裝置（localStorage），換平板各自設定
+  const soundToggle = root.querySelector('[data-scan-sound]');
+  if (soundToggle) {
+    soundToggle.checked = soundEnabled();
+    soundToggle.addEventListener('change', () => {
+      try {
+        localStorage.setItem(SOUND_KEY, soundToggle.checked ? '1' : '0');
+      } catch {
+        /* 無痕模式可能寫不到，照樣用今次設定 */
+      }
+      if (soundToggle.checked) beep('success');
+    });
+  }
 
   resultEl?.addEventListener('click', (event) => {
     const resumeBtn = event.target.closest('[data-resume]');

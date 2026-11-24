@@ -69,6 +69,14 @@ export function checkinPage({ user, event, summary, results, query, flash, csrfT
           <button class="btn btn-primary" type="button" data-scan-start ${open ? '' : 'disabled'}>開啟鏡頭</button>
         </div>
 
+        <div class="scan-options">
+          <label class="check">
+            <input type="checkbox" data-scan-sound value="1">
+            <span>掃描成功提示音</span>
+          </label>
+          <span class="muted small">設定會記在這部裝置；關掉後只保留震動。</span>
+        </div>
+
         <div class="scanner" data-scanner hidden>
           <video data-scan-video playsinline muted></video>
           <div class="scanner-frame" aria-hidden="true"></div>
