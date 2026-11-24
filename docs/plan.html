@@ -191,6 +191,7 @@ pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
 └─ tests/*.test.mjs</code></pre></div>
 <hr>
 <h2 id="s5">4. 資料模型</h2>
+<blockquote><p>2026-11-24 追加：<code>series</code>（系列）表與 <code>events.series_id</code>，見 <code>db/migrations/002_series.sql</code>； 跨場統計（個人／整體出席率、連續出席、缺席清單、出席矩陣）在 <code>src/lib/series.mjs</code> 即時計算，不另存統計表。</p></blockquote>
 <h3 id="s6">4.1 關聯</h3>
 <div class="code-wrap"><pre><code>users ──&lt; sessions
 users ──&lt; checkins（operator；自助簽到為 NULL）

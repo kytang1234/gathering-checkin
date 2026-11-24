@@ -71,6 +71,9 @@ attendance/
 
 ## 4. 資料模型
 
+> 2026-11-24 追加：`series`（系列）表與 `events.series_id`，見 `db/migrations/002_series.sql`；
+> 跨場統計（個人／整體出席率、連續出席、缺席清單、出席矩陣）在 `src/lib/series.mjs` 即時計算，不另存統計表。
+
 ### 4.1 關聯
 
 ```

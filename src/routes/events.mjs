@@ -4,6 +4,8 @@ import {
   createEvent,
   deleteEvent,
   getEvent,
+  getSeries,
+  listSeries,
   regeneratePublicToken,
   setEventStatus,
   updateEvent,
@@ -30,13 +32,14 @@ function valuesFromFields(fields) {
 export function registerEventRoutes(router) {
   router.get('/events/new', (ctx) => {
     requireAdmin(ctx);
-    return eventFormPage({ user: ctx.user, csrfToken: ctx.session.csrf });
+    return eventFormPage({ user: ctx.user, csrfToken: ctx.session.csrf, seriesList: listSeries(ctx.db) });
   });
 
   router.post('/events', (ctx) => {
     requireAdmin(ctx);
     try {
       const data = parseEventInput(ctx.fields);
+      if (data.series_id && !getSeries(ctx.db, data.series_id)) data.series_id = null;
       const event = createEvent(ctx.db, data);
       throw new Redirect(`/events/${event.id}?msg=created`);
     } catch (error) {
@@ -62,6 +65,7 @@ export function registerEventRoutes(router) {
     return eventOverviewPage({
       user: ctx.user,
       event,
+      series: event.series_id ? getSeries(ctx.db, event.series_id) : null,
       summary,
       selfUrl: selfUrl(ctx, event),
       flash: flashFrom(ctx.query),
@@ -72,7 +76,7 @@ export function registerEventRoutes(router) {
   router.get('/events/:id/edit', (ctx) => {
     const event = loadEvent(ctx);
     requireAdmin(ctx);
-    return eventFormPage({ user: ctx.user, event, csrfToken: ctx.session.csrf });
+    return eventFormPage({ user: ctx.user, event, csrfToken: ctx.session.csrf, seriesList: listSeries(ctx.db) });
   });
 
   router.post('/events/:id/edit', (ctx) => {
@@ -80,6 +84,7 @@ export function registerEventRoutes(router) {
     requireAdmin(ctx);
     try {
       const data = parseEventInput(ctx.fields);
+      if (data.series_id && !getSeries(ctx.db, data.series_id)) data.series_id = null;
       updateEvent(ctx.db, event.id, data);
       throw new Redirect(`/events/${event.id}?msg=saved`);
     } catch (error) {

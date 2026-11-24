@@ -185,5 +185,6 @@ export function parseEventInput(fields) {
     late_after_minutes: lateAfter ?? 15,
     allow_self_checkin: fields?.allow_self_checkin ? 1 : 0,
     allow_self_checkout: fields?.allow_self_checkout ? 1 : 0,
+    series_id: String(fields?.series_id || '').trim() || null,
   };
 }

@@ -29,7 +29,7 @@ function dollars(cents) {
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
 
-export function eventFormPage({ user, event = null, values = null, error = '', csrfToken = '' }) {
+export function eventFormPage({ user, event = null, values = null, error = '', csrfToken = '', seriesList = [] }) {
   const v = values || {
     name: event?.name || '',
     event_date: event?.event_date || '',
@@ -39,6 +39,7 @@ export function eventFormPage({ user, event = null, values = null, error = '', c
     notes: event?.notes || '',
     internal_notes: event?.internal_notes || '',
     status: event?.status || 'draft',
+    series_id: event?.series_id || '',
     timezone: event?.timezone || 'Asia/Hong_Kong',
     capacity: event?.capacity ?? '',
     fee_amount: event ? dollars(event.fee_amount) : '',
@@ -151,6 +152,17 @@ export function eventFormPage({ user, event = null, values = null, error = '', c
         <label class="field">
           <span>時區</span>
           <select name="timezone">${zoneOptions(v.timezone)}</select>
+        </label>
+
+        <label class="field">
+          <span>所屬系列</span>
+          <select name="series_id">
+            <option value="">（不屬於任何系列）</option>
+            ${seriesList.map(
+              (item) => html`<option value="${item.id}" ${v.series_id === item.id ? raw('selected') : ''}>${item.name}</option>`,
+            )}
+          </select>
+          <small class="muted">歸入系列後，可以在「系列」頁看跨場出席率。</small>
         </label>
 
         <label class="field">

@@ -25,6 +25,7 @@ const EVENT_COLUMNS = [
   'late_after_minutes',
   'allow_self_checkin',
   'allow_self_checkout',
+  'series_id',
 ];
 
 // ---------------------------------------------------------------- events
@@ -61,13 +62,14 @@ export function createEvent(db, data) {
     `INSERT INTO events (id, name, event_date, start_time, end_time, location, notes, internal_notes,
                          status, timezone, capacity, fee_amount, fee_note, contact_name, contact_phone,
                          meal_options, registration_deadline, late_after_minutes,
-                         allow_self_checkin, allow_self_checkout, public_token, created_at, updated_at)
+                         allow_self_checkin, allow_self_checkout, series_id, public_token, created_at, updated_at)
      VALUES (@id, @name, @event_date, @start_time, @end_time, @location, @notes, @internal_notes,
              @status, @timezone, @capacity, @fee_amount, @fee_note, @contact_name, @contact_phone,
              @meal_options, @registration_deadline, @late_after_minutes,
-             @allow_self_checkin, @allow_self_checkout, @public_token, @created_at, @updated_at)`,
+             @allow_self_checkin, @allow_self_checkout, @series_id, @public_token, @created_at, @updated_at)`,
   ).run({
     ...data,
+    series_id: data.series_id || null,
     meal_options: JSON.stringify(data.meal_options || []),
     id,
     public_token: token,
@@ -79,10 +81,67 @@ export function createEvent(db, data) {
 
 export function updateEvent(db, id, data) {
   const sets = EVENT_COLUMNS.map((col) => `${col} = @${col}`).join(', ');
-  const payload = { ...data, id, updated_at: nowIso() };
+  const payload = { ...data, id, updated_at: nowIso(), series_id: data.series_id || null };
   payload.meal_options = JSON.stringify(data.meal_options || []);
   db.prepare(`UPDATE events SET ${sets}, updated_at = @updated_at WHERE id = @id`).run(payload);
   return getEvent(db, id);
+}
+
+// ---------------------------------------------------------------- series
+
+export function listSeries(db) {
+  return db
+    .prepare(
+      `SELECT s.*,
+              (SELECT COUNT(*) FROM events e WHERE e.series_id = s.id) AS event_count,
+              (SELECT COUNT(*) FROM events e WHERE e.series_id = s.id AND e.status = 'closed') AS closed_count,
+              (SELECT COUNT(DISTINCT ea.attendee_id)
+                 FROM event_attendees ea
+                 JOIN events e ON e.id = ea.event_id
+                WHERE e.series_id = s.id) AS member_count,
+              (SELECT MAX(e.event_date) FROM events e WHERE e.series_id = s.id) AS last_date
+         FROM series s
+        ORDER BY COALESCE(last_date, '') DESC, s.created_at DESC`,
+    )
+    .all();
+}
+
+export function getSeries(db, id) {
+  return db.prepare('SELECT * FROM series WHERE id = ?').get(id) || null;
+}
+
+export function createSeries(db, { name, notes = null }) {
+  const id = newId('ser');
+  const at = nowIso();
+  db.prepare('INSERT INTO series (id, name, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?)').run(
+    id,
+    name,
+    notes,
+    at,
+    at,
+  );
+  return getSeries(db, id);
+}
+
+export function updateSeries(db, id, { name, notes = null }) {
+  db.prepare('UPDATE series SET name = ?, notes = ?, updated_at = ? WHERE id = ?').run(name, notes, nowIso(), id);
+  return getSeries(db, id);
+}
+
+/** 刪除系列：預設只拆掉關聯，聚會保留。 */
+export function deleteSeries(db, id, { deleteEvents = false } = {}) {
+  db.transaction(() => {
+    if (deleteEvents) {
+      db.prepare('DELETE FROM events WHERE series_id = ?').run(id);
+    } else {
+      db.prepare('UPDATE events SET series_id = NULL WHERE series_id = ?').run(id);
+    }
+    db.prepare('DELETE FROM series WHERE id = ?').run(id);
+  })();
+}
+
+export function listEventsBySeries(db, seriesId) {
+  return listEvents(db).filter((event) => event.series_id === seriesId);
 }
 
 export function setEventStatus(db, id, status) {

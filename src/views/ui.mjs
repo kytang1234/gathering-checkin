@@ -62,6 +62,7 @@ export function empty(text, action = null) {
 export function page({ title, user = null, active = '', flash = null, body, wide = false, csrfToken = '', scripts = [] }) {
   const nav = [
     { href: '/', label: '聚會' },
+    { href: '/series', label: '系列' },
     { href: '/events/new', label: '新增聚會', adminOnly: true },
     { href: '/users', label: '職員', adminOnly: true },
   ];

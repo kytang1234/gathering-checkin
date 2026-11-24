@@ -1,5 +1,6 @@
 import { registerAuthRoutes } from './auth.mjs';
 import { registerDashboardRoutes } from './dashboard.mjs';
+import { registerSeriesRoutes } from './series.mjs';
 import { registerEventRoutes } from './events.mjs';
 import { registerRosterRoutes } from './roster.mjs';
 import { registerCheckinRoutes } from './checkin.mjs';
@@ -10,6 +11,7 @@ import { registerPublicRoutes } from './public.mjs';
 export function registerRoutes(router) {
   registerAuthRoutes(router);
   registerDashboardRoutes(router);
+  registerSeriesRoutes(router);
   registerEventRoutes(router);
   registerRosterRoutes(router);
   registerCheckinRoutes(router);

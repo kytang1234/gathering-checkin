@@ -3,7 +3,7 @@ import { page, stat, statusBadge, whenText, csrf, money } from './ui.mjs';
 import { methodLabel } from '../lib/rules.mjs';
 import { formatDateTime } from '../lib/time.mjs';
 
-export function eventOverviewPage({ user, event, summary, selfUrl, flash, csrfToken }) {
+export function eventOverviewPage({ user, event, summary, selfUrl, flash, csrfToken, series = null }) {
   const isOpen = event.status === 'open';
   return page({
     title: event.name,
@@ -16,6 +16,7 @@ export function eventOverviewPage({ user, event, summary, selfUrl, flash, csrfTo
           <p class="crumb"><a href="/">聚會</a> / ${event.name}</p>
           <h1 class="h1">${event.name} ${statusBadge(event.status)}</h1>
           <p class="muted">${whenText(event)}${event.location ? ` · ${event.location}` : ''}</p>
+          ${series ? html`<p class="crumb">系列：<a href="/series/${series.id}">${series.name}</a></p>` : ''}
         </div>
         <div class="head-actions">
           ${user.role === 'admin' ? html`<a class="btn btn-ghost" href="/events/${event.id}/edit">編輯</a>` : ''}

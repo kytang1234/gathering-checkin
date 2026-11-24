@@ -3,16 +3,22 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { createEvent, createAttendee, addAttendeeToEvent } from '../src/lib/store.mjs';
 
-const SCHEMA = fs.readFileSync(
-  path.join(import.meta.dirname, '..', 'db', 'migrations', '001_init.sql'),
-  'utf8',
-);
+const MIGRATIONS_DIR = path.join(import.meta.dirname, '..', 'db', 'migrations');
 
-/** 記憶體資料庫，套用正式 migration（去掉 WAL，記憶體庫不需要）。 */
+function schemaSql() {
+  return fs
+    .readdirSync(MIGRATIONS_DIR)
+    .filter((name) => name.endsWith('.sql'))
+    .sort()
+    .map((name) => fs.readFileSync(path.join(MIGRATIONS_DIR, name), 'utf8'))
+    .join('\n');
+}
+
+/** 記憶體資料庫，套用全部 migration（去掉 WAL，記憶體庫不需要）。 */
 export function memoryDb() {
   const db = new Database(':memory:');
   db.pragma('foreign_keys = ON');
-  db.exec(SCHEMA.replace(/PRAGMA journal_mode = WAL;/i, ''));
+  db.exec(schemaSql().replace(/PRAGMA journal_mode = WAL;/gi, ''));
   return db;
 }
 

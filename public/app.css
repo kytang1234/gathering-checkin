@@ -1568,3 +1568,120 @@ input[type="checkbox"] {
   padding: 0;
   font-size: 14px;
 }
+
+/* ---------- 系列與矩陣 ---------- */
+
+.series-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.series-card {
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow);
+}
+
+.series-card:hover {
+  border-color: var(--brand);
+}
+
+.series-card h2 {
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+.series-meta {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.series-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: -6px 0 16px;
+}
+
+.series-table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.sort-links {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.matrix-card summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.matrix-card[open] summary {
+  margin-bottom: 12px;
+}
+
+.matrix-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.matrix {
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.matrix th,
+.matrix td {
+  border-bottom: 1px solid var(--line);
+  padding: 6px 8px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.matrix thead th {
+  background: #eceade;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+  position: sticky;
+  top: 0;
+}
+
+.matrix .sticky-col {
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  text-align: left;
+  font-weight: 600;
+  z-index: 2;
+}
+
+.matrix thead .sticky-col {
+  background: #eceade;
+  z-index: 3;
+}
+
+.matrix .cell-present { color: var(--ok); font-weight: 700; }
+.matrix .cell-late { color: var(--warn); font-weight: 700; }
+.matrix .cell-absent { color: var(--danger); }
+.matrix .cell-not_registered { color: var(--line-strong); }
