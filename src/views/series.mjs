@@ -71,7 +71,7 @@ export function seriesFormPage({ user, series = null, error = '', csrfToken = ''
         <a class="btn btn-ghost" href="${isEdit ? `/series/${series.id}` : '/series'}">返回</a>
       </div>
 
-      <form data-id="${series?.id || ''}" class="card stack">
+      <form method="post" action="${isEdit ? `/series/${series.id}/edit` : '/series'}" data-id="${series?.id || ''}" class="card stack">
         ${csrf(csrfToken)}
         <label class="field">
           <span>系列名稱 <em>必填</em></span>
@@ -232,7 +232,7 @@ export function seriesPage({ user, series, stats, includeOpen, sort, flash, csrf
         ? html`<section class="card">
             <h2 class="h2">刪除系列</h2>
             <p class="muted">可選擇只刪標籤（聚會保留），或連聚會一併刪除。</p>
-            <form data-id="${series.id}" class="inline-form">
+            <form method="post" action="/series/${series.id}/delete" data-id="${series.id}" class="inline-form">
               ${csrf(csrfToken)}
               <label class="check"><input type="radio" name="mode" value="tag" checked><span>只刪系列，聚會保留</span></label>
               <label class="check"><input type="radio" name="mode" value="all"><span>連 ${stats.totals.eventCount} 場聚會一併刪除</span></label>
