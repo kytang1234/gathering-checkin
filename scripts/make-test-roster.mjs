@@ -10,6 +10,7 @@ import path from 'node:path';
 
 const total = Number(process.argv[2] || 200);
 const output = process.argv[3] || path.join(import.meta.dirname, '..', 'samples', `roster-${total}.csv`);
+const phoneBase = Number(process.argv[4] || 91230001);
 
 const SURNAMES = [
   '陳', '李', '黃', '梁', '張', '劉', '何', '吳', '羅', '鄭',
@@ -49,35 +50,23 @@ function shuffle(list) {
   return copy;
 }
 
-/** 產生不重複的姓名 */
+/** 由姓氏 × 名字的全部組合中取出不重複的姓名（保證自然、無數字後綴） */
 function makeNames(count) {
-  const used = new Set();
-  const names = [];
-  const pool = shuffle(GIVEN);
-  let cursor = 0;
-
-  for (let i = 0; i < count; i += 1) {
-    let name = '';
-    let guard = 0;
-    do {
-      const surname = SURNAMES[Math.floor(random() * SURNAMES.length)];
-      const given = pool[cursor % pool.length] || GIVEN[i % GIVEN.length];
-      cursor += 1;
-      name = `${surname}${given}`;
-      guard += 1;
-      if (guard > 5000) name = `${surname}${given}${Math.floor(guard / 100)}`; // 理論上不會用到
-    } while (used.has(name));
-    used.add(name);
-    names.push(name);
+  const combos = [];
+  for (const surname of new Set(SURNAMES)) {
+    for (const given of new Set(GIVEN)) combos.push(surname + given);
   }
-  return names;
+  if (count > combos.length) {
+    throw new Error(`最多可產生 ${combos.length} 個不重複姓名， requested ${count}`);
+  }
+  return shuffle(combos).slice(0, count);
 }
 
 const names = makeNames(total);
 const rows = [['姓名', '電話', '組別', '桌號', '餐飲', '備註']];
 
 for (let i = 0; i < total; i += 1) {
-  const phone = String(91230001 + i);
+  const phone = String(phoneBase + i);
   const group = GROUPS[Math.floor(i / Math.ceil(total / GROUPS.length)) % GROUPS.length];
   const table = Math.floor(i / 10) + 1;
   const meal = i % 7 === 3 ? '素' : '葷';
@@ -109,4 +98,4 @@ console.log(`  組別：${GROUPS.join('、')}（各約 ${Math.ceil(total / GROUP
 console.log(`  桌號：1–${Math.ceil(total / 10)} 號桌，每桌 10 人`);
 console.log(`  餐飲：葷 ${total - vegetarian}、素 ${vegetarian}`);
 console.log(`  備註：${withNote} 人有備註（不吃牛／輪椅位／新朋友）`);
-console.log(`  電話：91230001–${91230000 + total}（測試號碼）`);
+console.log(`  電話：${phoneBase}–${phoneBase + total - 1}（測試號碼）`);

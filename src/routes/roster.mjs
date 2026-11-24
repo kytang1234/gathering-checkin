@@ -104,7 +104,7 @@ export function registerRosterRoutes(router) {
         throw new HttpError(400, '匯入資料已損壞，請重新貼上');
       }
       if (!Array.isArray(items) || items.length === 0) throw new HttpError(400, '沒有可匯入的資料');
-      if (items.length > 1000) throw new HttpError(400, '一次最多匯入 1000 人');
+      if (items.length > 2000) throw new HttpError(400, '一次最多匯入 2000 人');
 
       let created = 0;
       let skipped = 0;
