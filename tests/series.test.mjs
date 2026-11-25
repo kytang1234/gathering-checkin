@@ -179,3 +179,28 @@ test('名單加入後，系列成員數會反映', () => {
   );
   assert.equal(listSeries(db)[0].member_count, 1);
 });
+
+test('缺席與未報名分開統計', () => {
+  const events = [
+    { id: 'x1', name: 'X1', event_date: '2026-01-04', start_time: '19:00', status: 'closed', fee_amount: 0 },
+    { id: 'x2', name: 'X2', event_date: '2026-01-11', start_time: '19:00', status: 'closed', fee_amount: 0 },
+  ];
+  const roster = new Map([
+    ['x1', [row('x', '陳大文')]],
+    ['x2', [row('y', '李小明', { checked_in_at: '2026-01-11T11:00:00.000Z' })]],
+  ]);
+  const s = buildSeriesStats({
+    series: { id: 's', name: 'S' },
+    events,
+    rosterByEvent: roster,
+    today: '2026-02-01',
+  });
+  const x = s.members.find((m) => m.attendee_id === 'x');
+  const y = s.members.find((m) => m.attendee_id === 'y');
+  assert.equal(x.absent.length, 2, '缺席總數 = 未出席的基準場次');
+  assert.equal(x.missed.length, 1, '缺席（已報名）');
+  assert.equal(x.notInvited.length, 1, '未報名');
+  assert.equal(y.absent.length, 1);
+  assert.equal(y.missed.length, 0);
+  assert.equal(y.notInvited.length, 1);
+});

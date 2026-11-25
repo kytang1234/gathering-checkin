@@ -83,6 +83,8 @@ export function buildSeriesStats({ series, events, rosterByEvent, includeOpen = 
     let paid = 0;
     const stays = [];
     const absent = [];
+    const missed = [];
+    const notInvited = [];
     let firstAttended = null;
     let lastAttended = null;
 
@@ -92,12 +94,14 @@ export function buildSeriesStats({ series, events, rosterByEvent, includeOpen = 
       if (!entry) {
         cells.push('not_registered');
         absent.push(event);
+        notInvited.push(event);
         continue;
       }
       registered += 1;
       if (!entry.checked_in_at) {
         cells.push('absent');
         absent.push(event);
+        missed.push(event);
         continue;
       }
 
@@ -145,6 +149,8 @@ export function buildSeriesStats({ series, events, rosterByEvent, includeOpen = 
       firstAttended,
       lastAttended,
       absent,
+      missed,
+      notInvited,
       cells,
     });
   }
@@ -214,6 +220,8 @@ export function seriesMembersCsv(stats) {
     '遲到',
     '最近出席',
     '缺席場次',
+    '缺席日期',
+    '未報名場次',
     '應繳',
     '實繳',
   ];
@@ -231,7 +239,9 @@ export function seriesMembersCsv(stats) {
       member.onTime,
       member.late,
       member.lastAttended || '',
+      member.absent.length,
       member.absent.map((event) => event.event_date).join(' '),
+      member.notInvited.length,
       (member.owed / 100).toFixed(2),
       (member.paid / 100).toFixed(2),
     ]);

@@ -294,14 +294,27 @@ export function memberPage({ user, series, member, stats }) {
         </section>
 
         <section class="card">
-          <h2 class="h2">缺席場次（${member.absent.length}）</h2>
-          ${member.absent.length === 0
+          <h2 class="h2">缺席與未報名</h2>
+          <p class="muted small">缺席＝有報名但沒有簽到；未報名＝不在該場名單，不應視為缺席。</p>
+
+          <p class="strong">缺席（已報名）${member.missed.length} 場</p>
+          ${member.missed.length === 0
             ? html`<p class="muted">沒有缺席。</p>`
             : html`<ul class="plain-list">
-                ${member.absent.map(
+                ${member.missed.map(
                   (event) => html`<li><span class="muted small">${event.event_date}</span> ${event.name}</li>`,
                 )}
               </ul>`}
+
+          <p class="strong" style="margin-top:14px">未報名 ${member.notInvited.length} 場</p>
+          ${member.notInvited.length === 0
+            ? html`<p class="muted">每場都在名單內。</p>`
+            : html`<ul class="plain-list">
+                ${member.notInvited.map(
+                  (event) => html`<li><span class="muted small">${event.event_date}</span> ${event.name}</li>`,
+                )}
+              </ul>`}
+
           <p class="hint">首次出席：${member.firstAttended || '—'}　最近出席：${member.lastAttended || '—'}</p>
         </section>
       </div>
