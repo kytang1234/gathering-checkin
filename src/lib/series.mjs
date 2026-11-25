@@ -177,6 +177,7 @@ export function buildSeriesStats({ series, events, rosterByEvent, includeOpen = 
         ? Math.round((eventRates.reduce((a, b) => a + b, 0) / eventRates.length) * 10) / 10
         : null,
       avgPerEvent: baseEvents.length ? Math.round((attendedSeats / baseEvents.length) * 10) / 10 : null,
+      openPastCount: events.filter((event) => event.status === 'open' && event.event_date <= (today || new Date().toISOString().slice(0, 10))).length,
       newMembers: rows.filter((row) => firstBaseDate && row.firstAttended && row.firstAttended > firstBaseDate).length,
       activeMembers: rows.filter((row) => row.seriesRate !== null && row.seriesRate >= 50).length,
       owed: rows.reduce((sum, row) => sum + row.owed, 0),

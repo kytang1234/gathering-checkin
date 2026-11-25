@@ -130,6 +130,19 @@ export function seriesPage({ user, series, stats, includeOpen, sort, flash, csrf
         </div>
       </div>
 
+      ${stats.baseEvents.length === 0 && stats.totals.eventCount > 0
+        ? html`<div class="flash flash-err">
+            這個系列有 ${stats.totals.eventCount} 場聚會，但全部都未設為「已結束」，所以統計暫時是 0。
+            <a href="/series/${series.id}?include=open">按此先看「包括已開放」的數字</a>，
+            或到聚會頁把已完結的場次改為「已結束」。
+          </div>`
+        : !includeOpen && stats.totals.openPastCount > 0
+          ? html`<div class="flash flash-ok">
+              另有 ${stats.totals.openPastCount} 場已過但未設為「已結束」，暫未計入。
+              <a href="/series/${series.id}?include=open">包括已開放</a>
+            </div>`
+          : ''}
+
       ${kpi(stats)}
 
       <div class="series-toolbar print-hide">
